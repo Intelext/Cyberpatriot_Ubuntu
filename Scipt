@@ -1,0 +1,18 @@
+#!/bin/bash
+
+# Install fail2ban
+sudo apt-get update
+sudo apt-get install fail2ban -y
+
+# Configure fail2ban
+sudo cp /etc/fail2ban/jail.conf /etc/fail2ban/jail.local
+sudo sed -i 's/bantime  = 600/bantime  = 3600/g' /etc/fail2ban/jail.local
+sudo sed -i 's/findtime  = 600/findtime  = 3600/g' /etc/fail2ban/jail.local
+sudo sed -i 's/maxretry = 6/maxretry = 3/g' /etc/fail2ban/jail.local
+sudo service fail2ban restart
+
+# Install pam.d
+sudo apt-get install libpam-cracklib -y
+sudo cp /etc/pam.d/common-password /etc/pam.d/common-password.bak
+sudo sed -i 's/# password    requisite     pam_cracklib.so try_first_pass retry=3 minlen=8 difok=3 ucredit=-1 lcredit=-1 dcredit=-1 ocredit=-1/# passwordrequisite     pam_cracklib.so try_first_pass retry=3 minlen=10 difok=3 ucredit=-1 lcredit=-1 dcredit=-1 ocredit=-1\npassword    required      pam_tally2.so deny=5 unlock_time=1800 onerr=fail audit even_deny_root root_unlock_time=1800\npassword    required      pam_tally2.so deny=5 unlock_time=1800 onerr=fail audit even_deny_root root_unlock_time=1800\npassword    required      pam_tally2.so deny=5 unlock_time=1800 onerr=fail audit even_deny_root root_unlock_time=1800\npassword    required      pam_tally2.so deny=5 unlock_time=1800 onerr=fail audit even_deny_root root_unlock_time=1800\npassword    required      pam_tally2.so deny=5 unlock_time=1800 onerr=fail audit even_deny_root root_unlock_time=1800\npassword    required      pam_tally2.so deny=5 unlock_time=1800 onerr=fail audit even_deny_root root_unlock_time=1800\npassword    required      pam_tally2.so deny=5 unlock_time=1800 onerr=fail audit even_deny_root root_unlock_time=1800\npassword    required      pam_tally2.so deny=5 unlock_time=1800 onerr=fail audit even_deny_root root_unlock_time=1800\npassword    required      pam_tally2.so deny=5 unlock_time=1800 onerr=fail audit even_deny_root root
+
