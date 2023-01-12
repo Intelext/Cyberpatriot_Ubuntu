@@ -1,5 +1,27 @@
 #!/bin/bash
 
+# Update the system
+sudo apt-get update
+
+# Install UFW Firewall
+sudo apt-get install ufw
+
+# Enable UFW Firewall
+sudo ufw enable
+
+# Allow SSH connections through the firewall
+sudo ufw allow ssh
+
+# Allow HTTP and HTTPS connections through the firewall
+sudo ufw allow http
+sudo ufw allow https
+
+# Deny all other incoming connections 
+sudo ufw default deny incoming 
+
+# Allow all outgoing connections 
+sudo ufw default allow outgoing 
+
 # Install fail2ban
 sudo apt-get update
 sudo apt-get install fail2ban -y
@@ -16,3 +38,72 @@ sudo apt-get install libpam-cracklib -y
 sudo cp /etc/pam.d/common-password /etc/pam.d/common-password.bak
 sudo sed -i 's/# password    requisite     pam_cracklib.so try_first_pass retry=3 minlen=8 difok=3 ucredit=-1 lcredit=-1 dcredit=-1 ocredit=-1/# passwordrequisite     pam_cracklib.so try_first_pass retry=3 minlen=10 difok=3 ucredit=-1 lcredit=-1 dcredit=-1 ocredit=-1\npassword    required      pam_tally2.so deny=5 unlock_time=1800 onerr=fail audit even_deny_root root_unlock_time=1800\npassword    required      pam_tally2.so deny=5 unlock_time=1800 onerr=fail audit even_deny_root root_unlock_time=1800\npassword    required      pam_tally2.so deny=5 unlock_time=1800 onerr=fail audit even_deny_root root_unlock_time=1800\npassword    required      pam_tally2.so deny=5 unlock_time=1800 onerr=fail audit even_deny_root root_unlock_time=1800\npassword    required      pam_tally2.so deny=5 unlock_time=1800 onerr=fail audit even_deny_root root_unlock_time=1800\npassword    required      pam_tally2.so deny=5 unlock_time=1800 onerr=fail audit even_deny_root root_unlock_time=1800\npassword    required      pam_tally2.so deny=5 unlock_time=1800 onerr=fail audit even_deny_root root_unlock_time=1800\npassword    required      pam_tally2.so deny=5 unlock_time=1800 onerr=fail audit even_deny_root root_unlock_time=1800\npassword    required      pam_tally2.so deny=5 unlock_time=1800 onerr=fail audit even_deny_root root
 
+# Check for rootkits
+echo "Checking for rootkits..."
+rkhunter --checkall
+
+# Update apt-get
+sudo apt-get update
+
+# Install wget
+sudo apt-get install wget -y
+
+# Download the latest version of lynis
+wget https://cisofy.com/files/lynis-latest.tar.gz
+
+# Extract the tar file
+tar -xvzf lynis-latest.tar.gz
+
+# Change directory to the extracted folder
+cd lynis
+
+# Run the install script 
+sudo ./lynis install
+
+# Check if user is root
+if [ "$EUID" -ne 0 ]
+  then echo "Please run as root"
+  exit
+fi
+
+# Create backup of sshd_config
+cp /etc/ssh/sshd_config /etc/ssh/sshd_config.bak
+
+# Set Protocol to 2
+sed -i 's/#Protocol 2/Protocol 2/g' /etc/ssh/sshd_config
+
+# Set LogLevel to INFO
+sed -i 's/#LogLevel INFO/LogLevel INFO/g' /etc/ssh/sshd_config
+
+# Disable root login
+sed -i 's/#PermitRootLogin yes/PermitRootLogin no/g' /etc/ssh/sshd_config
+
+# Disable empty passwords
+sed -i 's/#PermitEmptyPasswords no/PermitEmptyPasswords no/g' /etc/ssh/sshd_config
+
+# Disable X11 forwarding
+sed -i 's/#X11Forwarding yes/X11Forwarding no/g' /etc/ssh/sshd_config
+
+# Set MaxAuthTries to 3
+sed -i 's/#MaxAuthTries 6/MaxAuthTries 3/g' /etc/ssh/sshd_config
+
+# Set MaxSessions to 3
+sed -i 's/#MaxSessions 10/MaxSessions 3/g' /etc/ssh/sshd_config
+
+# Restart SSH service for changes to take effect 
+systemctl restart sshd
+
+# Get the list of users
+users=$(cat /etc/passwd | cut -d: -f1)
+
+# Loop through the list of users
+for user in $users; do
+
+    # Get the user id of the current user
+    uid=$(id -u $user)
+
+    # Check if the user id is 0 (root) or the same as the current user
+    if [ $uid -eq 0 ] || [ $uid -eq $(id -u) ]; then
+        echo "$user is either root or the same as the current user"
+    fi
+done
