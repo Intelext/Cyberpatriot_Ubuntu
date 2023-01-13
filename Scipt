@@ -107,3 +107,25 @@ for user in $users; do
         echo "$user is either root or the same as the current user"
     fi
 done
+
+# Install AppArmor
+sudo apt-get install apparmor apparmor-utils
+
+# Enable AppArmor
+sudo systemctl enable apparmor
+sudo systemctl start apparmor
+
+# Check the status of AppArmor
+sudo systemctl status apparmor
+
+# List currently loaded AppArmor profiles
+sudo aa-status
+
+# Create a new AppArmor profile for a specific application
+sudo aa-genprof /usr/bin/example-application
+
+# Edit the new AppArmor profile
+sudo nano /etc/apparmor.d/usr.bin.example-application
+
+# Reload the AppArmor profiles
+sudo service apparmor reload
