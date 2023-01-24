@@ -1,0 +1,80 @@
+#!/bin/bash
+
+# Create a script for configuring a Fedora 36 machine for Cyber Patriot
+
+# Install necessary packages
+dnf install -y selinux-policy-targeted auditd aide gdisk
+
+# Set SELinux in enforcing mode
+sed -i s/SELINUX=enforcing/SELINUX=permissive/g /etc/selinux/config
+
+# Enable auditd daemon
+systemctl enable auditd
+systemctl start audits
+
+# Configure Aide
+aide --init
+mv /var/lib/aide/aide.db.new /var/lib/aide/aide.db
+
+# Create a partition for mounting
+gdisk /dev/vda
+# Create a new partition
+n
+# Partition number
+1
+# First cylinder
+Enter
+# Last cylinder
++500M
+# Type of partition
+8300
+# Write changes
+w
+
+# Format the partition
+mkfs.ext4 /dev/vda1
+
+# Mount the partition
+mkdir /data
+mount /dev/vda1 /data
+
+# Add mount to fstab
+/dev/vda1 /data ext4 defaults 0 0 /etc/fstab
+
+# Set permissions and ownerships on the mount
+chown root:root /data
+chmod 755 /data
+
+# Create a backup script
+cat <<EOT > /data/backup.sh
+#!/bin/bash
+
+# Backup script for Cyber Patriot
+
+# Check for the backup directory
+if [ ! -d /data/backup ]
+then
+	mkdir /data/backup
+fi
+
+# Backup important files
+cp -R /etc /data/backup
+cp -R /var/log /data/backup
+
+# Compress the backup
+tar -czvf /data/backup.tar.gz /data/backup
+
+# Clean up
+rm -rf /data/backup
+EOT
+
+# Make the backup script executable
+chmod +x /data/backup.sh
+
+# Create a cron job to run the backup script
+crontab -e
+# Add the following line
+0 0 * * * /data/backup.sh 
+
+# Update the system
+dnf update
